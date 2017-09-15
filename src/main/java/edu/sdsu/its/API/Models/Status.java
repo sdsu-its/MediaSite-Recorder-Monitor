@@ -1,5 +1,6 @@
 package edu.sdsu.its.API.Models;
 
+import com.google.gson.Gson;
 import lombok.Getter;
 
 /**
@@ -53,5 +54,10 @@ public enum Status {
 
     public boolean inAlarm() {
         return !okay();
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 }
