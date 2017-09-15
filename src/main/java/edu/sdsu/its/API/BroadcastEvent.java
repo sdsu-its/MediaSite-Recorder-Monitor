@@ -1,7 +1,9 @@
 package edu.sdsu.its.API;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import edu.sdsu.its.API.Models.Recorder;
+import edu.sdsu.its.API.Models.Status;
 import edu.sdsu.its.Hooks.Hook;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
@@ -64,8 +66,9 @@ public class BroadcastEvent {
         }
 
         public String asJson() {
-            return new Gson().toJson(this);
-        }
+            GsonBuilder builder = new GsonBuilder();
+            builder.registerTypeAdapterFactory(new Status.StatusAdapterFactory());
+            return builder.create().toJson(this);        }
 
         public void broadcast() {
             broadcastEvent(this);

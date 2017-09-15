@@ -29,11 +29,10 @@ function loadEvents() {
                         return (className.match(/(^|\s)status-\S+/g) || []).join(' ');
                     });
 
-                    $row.children('.recorder-status').addClass("status-" + obj.recorder.status.stateCode);
-                    $row.children('.recorder-status').text(obj.recorder.status.stateString);
+                    $row.children('.recorder-status').addClass("status-" + obj.recorder.status.code);
+                    $row.children('.recorder-status').text(obj.recorder.status.string);
                     $row.children('.recorder-name').text(obj.recorder.Name);
                     $row.children('.recorder-version').text(obj.recorder.Version);
-                    // TODO Reformat Date
                     $row.children('.recorder-last-seen').text(obj.recorder.lastSeen);
                     break;
 
@@ -52,8 +51,8 @@ function loadEvents() {
 
                     $(row.insertCell(0))
                         .addClass("recorder-status")
-                        .addClass("status-" + obj.recorder.status.stateCode)
-                        .text(obj.recorder.status.stateString);
+                        .addClass("status-" + obj.recorder.status.code)
+                        .text(obj.recorder.status.string);
 
                     $(row.insertCell(1))
                         .addClass("recorder-name")

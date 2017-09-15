@@ -35,7 +35,7 @@
                     <td class="recorder-status status-{{ recorder.status.stateCode }}"> {{ recorder.status.stateString }}</td>
                     <td class="recorder-name">{{ recorder.Name }}</td>
                     <td class="recorder-version">{{ recorder.Version }}</td>
-                    <td class="recorder-last-seen">{{ recorder.lastSeen }}</td>
+                    <td class="recorder-last-seen">{{ recorder.lastSeen | date("MMM dd, yyyy h:mm:ss aa") }}</td>
                     <td class="recorder-more-info-button recorder-info">
                         <i class="fa fa-info-circle" aria-hidden="true"
                            onclick="showRecorderByID('{{ recorder.Id }}')"></i>
