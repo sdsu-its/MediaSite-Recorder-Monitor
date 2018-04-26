@@ -7,50 +7,93 @@
     <display-name>MediaSite Recorder Monitor</display-name>
 
     <servlet>
-        <servlet-name>com.techcasita.jersey.MyApplication</servlet-name>
-        <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
-
-        <!-- Register JAX-RS Application, if needed.
-        <init-param>
-            <param-name>javax.ws.rs.Application</param-name>
-            <param-value>my.package.MyApplication</param-value>
-        </init-param>
-        -->
-
-        <!-- Register resources and providers under my.package.-->
-        <init-param>
-            <param-name>jersey.config.server.provider.packages</param-name>
-            <param-value>com.techcasita.jersey</param-value>
-        </init-param>
-
-
-        <!-- Register my custom provider (not needed if it's in my.package) AND LoggingFilter.
-        <init-param>
-            <param-name>jersey.config.server.provider.classnames</param-name>
-            <param-value>my.package.SecurityRequestFilter;org.glassfish.jersey.filter.LoggingFilter</param-value>
-        </init-param>
-        -->
-
-        <!-- Enable Tracing support.
-        <init-param>
-            <param-name>jersey.config.server.tracing</param-name>
-            <param-value>ALL</param-value>
-        </init-param>
-        -->
-        <load-on-startup>1</load-on-startup>
+        <servlet-name>Index</servlet-name>
+        <servlet-class>edu.sdsu.its.Routes.Index</servlet-class>
     </servlet>
+    <servlet-mapping>
+        <servlet-name>Index</servlet-name>
+        <url-pattern>/index</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Login</servlet-name>
+        <servlet-class>edu.sdsu.its.Routes.Login</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Login</servlet-name>
+        <url-pattern>/login</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Manage-Integrations</servlet-name>
+        <servlet-class>edu.sdsu.its.Routes.ManageIntegration</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Manage-Integrations</servlet-name>
+        <url-pattern>/manage/integrations</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Manage-Rates</servlet-name>
+        <servlet-class>edu.sdsu.its.Routes.ManageRates</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Manage-Rates</servlet-name>
+        <url-pattern>/manage/rates</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Manage-Users</servlet-name>
+        <servlet-class>edu.sdsu.its.Routes.ManageUsers</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Manage-Users</servlet-name>
+        <url-pattern>/manage/users</url-pattern>
+    </servlet-mapping>
+
 
     <servlet-mapping>
-        <servlet-name>com.techcasita.jersey.MyApplication</servlet-name>
-        <url-pattern>/rest/*</url-pattern>
+        <servlet-name>default</servlet-name>
+        <url-pattern>/assets/*</url-pattern>
     </servlet-mapping>
+
+    <servlet>
+        <servlet-name>API</servlet-name>
+        <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+
+        <init-param>
+            <param-name>jersey.config.server.provider.packages</param-name>
+            <param-value>edu.sdsu.its</param-value>
+        </init-param>
+
+        <load-on-startup>1</load-on-startup>
+        <async-supported>true</async-supported>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>API</servlet-name>
+        <url-pattern>/api/*</url-pattern>
+    </servlet-mapping>
+
+    <filter-mapping>
+        <filter-name>AuthFilter</filter-name>
+        <url-pattern>/api/*</url-pattern>
+    </filter-mapping>
+    <filter>
+        <filter-name>AuthFilter</filter-name>
+        <filter-class>edu.sdsu.its.API.APIFilter</filter-class>
+        <async-supported>true</async-supported>
+    </filter>
+
+    <listener>
+        <listener-class>edu.sdsu.its.Init</listener-class>
+    </listener>
     <session-config>
         <session-timeout>
             30
         </session-timeout>
     </session-config>
     <welcome-file-list>
-        <welcome-file>index.html</welcome-file>
+        <welcome-file>index</welcome-file>
     </welcome-file-list>
 </web-app>
 
