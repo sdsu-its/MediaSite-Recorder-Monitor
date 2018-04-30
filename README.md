@@ -4,6 +4,9 @@ TODO: JDoc for various Classes and Methods as needed.
 
 Mediasite Docs: [mediasite.sdsu.edu/mediasite/api/v1/$metadata](http://mediasite.sdsu.edu/mediasite/api/v1/$metadata)
 
+## Building Docker Image
+You will need to run a `./gradlew clean war` before you build the docker container to make sure that the necessary assets (like the `.war`) file exists when the container is built. 
+
 ## Vault Parameters
 `www_url`
 `db-password`
