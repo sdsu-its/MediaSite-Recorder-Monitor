@@ -4,6 +4,11 @@ TODO: JDoc for various Classes and Methods as needed.
 
 Mediasite Docs: [mediasite.sdsu.edu/mediasite/api/v1/$metadata](http://mediasite.sdsu.edu/mediasite/api/v1/$metadata)
 
+## Vault Parameters
+`www_url`
+`db-password`
+`db-url`
+`db-user`
 
 ### DDL
 ```sql
