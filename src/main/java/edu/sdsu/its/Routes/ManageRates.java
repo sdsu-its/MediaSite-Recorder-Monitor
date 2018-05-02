@@ -33,6 +33,7 @@ public class ManageRates extends HttpServlet {
         request.setAttribute("list_frequency", DB.getPreference("sync_db.frequency"));
         request.setAttribute("status_sync", DB.getPreference("sync_recorder.enable"));
         request.setAttribute("status_frequency", DB.getPreference("sync_recorder.frequency"));
+        request.setAttribute("status_retry_count", DB.getPreference("sync_recorder.retry_count"));
 
         renderer.dispatcherFor(TEMPLATE_PATH)
                 .render(request, response);

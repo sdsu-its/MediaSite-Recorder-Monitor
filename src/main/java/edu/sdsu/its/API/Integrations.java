@@ -5,7 +5,7 @@ import edu.sdsu.its.API.Models.Preference;
 import edu.sdsu.its.API.Models.SimpleMessage;
 import edu.sdsu.its.API.Models.User;
 import edu.sdsu.its.DB;
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -24,10 +24,9 @@ import java.util.Arrays;
  * @author Tom Paulus
  * Created on 8/1/17.
  */
+@Log4j
 @Path("integrations")
 public class Integrations {
-    private static final Logger LOGGER = Logger.getLogger(Integrations.class);
-
     @Context
     private HttpServletRequest request;
 
@@ -41,11 +40,11 @@ public class Integrations {
                             "No payload supplied").asJson())
                     .build();
 
-        LOGGER.debug("Received Payload:" + payload);
+        log.debug("Received Payload:" + payload);
 
         Preference[] preferences = new Gson().fromJson(payload, Preference[].class);
-        LOGGER.debug(String.format("Requested Updates to %d settings", preferences.length));
-        LOGGER.debug(Arrays.toString(preferences));
+        log.debug(String.format("Requested Updates to %d settings", preferences.length));
+        log.debug(Arrays.toString(preferences));
 
         for (Preference preference : preferences) {
             final String current = DB.getPreference(preference.getSetting());
@@ -58,7 +57,7 @@ public class Integrations {
 
             if (!current.equals(preference.getValue())) {
                 // Setting has been modified
-                LOGGER.warn(String.format("User \"%s\" is updating the setting with name \"%s\"from \"%s\" to \"%s\"",
+                log.warn(String.format("User \"%s\" is updating the setting with name \"%s\"from \"%s\" to \"%s\"",
                         ((User) request.getSession().getAttribute("user")).getEmail(),
                         preference.getSetting(),
                         current,
