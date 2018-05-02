@@ -4,7 +4,7 @@ import edu.sdsu.its.API.Models.Preference;
 import edu.sdsu.its.API.Models.Recorder;
 import edu.sdsu.its.API.Models.User;
 import lombok.Setter;
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j;
 import org.jasypt.util.password.StrongPasswordEncryptor;
 
 import javax.persistence.*;
@@ -16,8 +16,8 @@ import java.util.Properties;
  * Created on 5/5/17.
  */
 @SuppressWarnings( {"unchecked"})
+@Log4j
 public class DB {
-    private static final Logger LOGGER = Logger.getLogger(DB.class);
     public static final StrongPasswordEncryptor PASSWORD_ENCRYPTOR = new StrongPasswordEncryptor();
 
     @Setter
@@ -31,9 +31,9 @@ public class DB {
 
         try {
             sessionFactory = Persistence.createEntityManagerFactory("edu.sdsu.its.jpa", props);
-            LOGGER.info("Session Factory is ready to go!");
+            log.info("Session Factory is ready to go!");
         } catch (Exception e) {
-            LOGGER.fatal("Could not start Session Factory", e);
+            log.fatal("Could not start Session Factory", e);
 
             throw e;
         }
@@ -41,7 +41,7 @@ public class DB {
 
     public static void shutdown() {
         if (sessionFactory != null) {
-            LOGGER.warn("Closing Session Factory");
+            log.warn("Closing Session Factory");
             sessionFactory.close();
         }
     }
@@ -56,14 +56,14 @@ public class DB {
             entityManager.getTransaction().begin();
 
             Preference preference = (Preference) entityManager.createQuery("select p from Preference p where p.setting = '" + name + "'").getSingleResult();
-            LOGGER.debug(preference);
+            log.debug(preference);
 
             entityManager.getTransaction().commit();
             entityManager.close();
 
             return preference.getValue();
         } catch (NoResultException e) {
-            LOGGER.warn("No Setting found with name - " + name);
+            log.warn("No Setting found with name - " + name);
         }
 
         return null;
@@ -98,8 +98,8 @@ public class DB {
             updatedUser = users.get(0);
             entityManager.getTransaction().commit();
         } else {
-            LOGGER.warn("Failed to Update User - Rolling Back");
-            LOGGER.debug(user.toString());
+            log.warn("Failed to Update User - Rolling Back");
+            log.debug(user.toString());
             entityManager.getTransaction().rollback();
         }
 
@@ -121,7 +121,7 @@ public class DB {
         entityManager.getTransaction().begin();
 
         List<User> users = entityManager.createQuery("select u from User u" + (restriction != null && !restriction.isEmpty() ? " where " + restriction : "")).getResultList();
-        LOGGER.debug(String.format("Found %d users in DB that match restriction \"%s\"", users.size(), restriction));
+        log.debug(String.format("Found %d users in DB that match restriction \"%s\"", users.size(), restriction));
 
         entityManager.getTransaction().commit();
         entityManager.close();
@@ -143,13 +143,13 @@ public class DB {
 
             return password != null && !passHash.isEmpty() && PASSWORD_ENCRYPTOR.checkPassword(password, passHash) ? user : null;
         } catch (IndexOutOfBoundsException e) {
-            LOGGER.warn(String.format("No user exists with the Email \"%s\"", email));
+            log.warn(String.format("No user exists with the Email \"%s\"", email));
         }
         return null;
     }
 
     public static void deleteUser(final User user) {
-        LOGGER.warn(String.format("Deleting User with Email: %s", user.getEmail()));
+        log.warn(String.format("Deleting User with Email: %s", user.getEmail()));
         EntityManager entityManager = sessionFactory.createEntityManager();
         entityManager.getTransaction().begin();
         entityManager.remove(entityManager.contains(user) ? user : entityManager.merge(user));
@@ -169,7 +169,7 @@ public class DB {
         entityManager.getTransaction().begin();
 
         List<Recorder> recorders = entityManager.createQuery("select r from Recorder r " + (restriction != null && !restriction.isEmpty() ? " where " + restriction : "")).getResultList();
-        LOGGER.debug(String.format("Found %d Recorders in DB that match restriction \"%s\"", recorders.size(), restriction));
+        log.debug(String.format("Found %d Recorders in DB that match restriction \"%s\"", recorders.size(), restriction));
 
         entityManager.getTransaction().commit();
         entityManager.close();

@@ -7,7 +7,7 @@ import edu.sdsu.its.Hooks.Hook;
 import edu.sdsu.its.Mediasite.Recorders;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j;
 import org.quartz.*;
 
 import java.io.IOException;
@@ -23,9 +23,8 @@ import static org.quartz.TriggerBuilder.newTrigger;
  */
 @NoArgsConstructor
 @AllArgsConstructor
+@Log4j
 public class SyncRecorderStatus implements Job {
-    private static final Logger LOGGER = Logger.getLogger(SyncRecorderStatus.class);
-
     public static final String JOB_GROUP = "recorder_status";
     public static final String TRIGGER_NAME_STEM = "SyncRecorderStatusTrigger";
     public static final String JOB_NAME_STEM = "SyncRecorderStatus";
@@ -56,18 +55,18 @@ public class SyncRecorderStatus implements Job {
 
         // Tell quartz to schedule the job using our trigger
         scheduler.scheduleJob(job, trigger);
-        LOGGER.debug("Scheduled Sync for Recorder with ID - " + this.mRecorderID);
+        log.debug("Scheduled Sync for Recorder with ID - " + this.mRecorderID);
     }
 
     public void execute(JobExecutionContext context) throws JobExecutionException {
         this.mRecorderID = context.getJobDetail().getDescription();
-        LOGGER.info("Fetching Recorder Status for Recorder with ID: " + this.mRecorderID);
+        log.info("Fetching Recorder Status for Recorder with ID: " + this.mRecorderID);
 
         Recorder recorder;
         try {
             recorder = DB.getRecorder("id = '" + this.mRecorderID + "'")[0];
         } catch (IndexOutOfBoundsException e) {
-            LOGGER.error("Could not locate Recorder Record in DB for recorder ID - " + this.mRecorderID);
+            log.error("Could not locate Recorder Record in DB for recorder ID - " + this.mRecorderID);
             return;
         }
 
@@ -77,36 +76,49 @@ public class SyncRecorderStatus implements Job {
         try {
             currentStatus = Recorders.getRecorderStatus(Recorders.getRecorderIP(this.mRecorderID));
         } catch (RuntimeException e) {
-            LOGGER.error("Problem retrieving recorder status from API - Invalid IP", e);
+            log.error("Problem retrieving recorder status from API - Invalid IP", e);
         }
 
         if (currentStatus == null) {
-            LOGGER.error("Problem retrieving recorder status from API/Recorder");
-            currentStatus = Status.UNKNOWN;
+            log.warn("Problem retrieving recorder status from API/Recorder");
+            int retry_max = Integer.parseInt(DB.getPreference("sync_recorder.retry_count"));
+            if (recorder.getRetryCount() >= retry_max) {
+                log.warn("Retry count exceed for recorder - " + recorder.getName());
+                currentStatus = Status.UNKNOWN;
+            } else {
+                // Retry Count not met yet, we can try again
+                log.warn(String.format("Will retry %d more times", recorder.getRetryCount() - retry_max));
+                log.info("Hook Fire suppressed!");
+                recorder.setRetryCount(recorder.getRetryCount() + 1);
+                DB.updateRecorder(recorder);
+
+                log.info("Finished Updating Recorder Status for Recorder with ID: " + this.mRecorderID);
+                return;
+            }
         }
 
-        LOGGER.debug(String.format("Recorder Status is \"%s\"", currentStatus));
+        log.debug(String.format("Recorder Status is \"%s\"", currentStatus));
         recorder.setStatus(currentStatus);
-        recorder.setLastSeen(new Timestamp(System.currentTimeMillis()));
+        if (currentStatus != Status.UNKNOWN) recorder.setLastSeen(new Timestamp(System.currentTimeMillis()));
         DB.updateRecorder(recorder);
-        LOGGER.info("Finished Updating Recorder Status for Recorder with ID: " + this.mRecorderID);
+        log.info("Finished Updating Recorder Status for Recorder with ID: " + this.mRecorderID);
 
         try {
             if ((previousStatus == null || previousStatus.okay()) && currentStatus.inAlarm()) {
-                LOGGER.warn("Recorder " + mRecorderID + "has entered ALARM state!");
+                log.warn("Recorder " + mRecorderID + "has entered ALARM state!");
                 Hook.fire(Hook.RECORDER_ALARM_ACTIVATE, new Recorder(mRecorderID, currentStatus));
             } else if ((previousStatus == null || previousStatus.inAlarm()) && currentStatus.okay()) {
-                LOGGER.info("Recorder" + mRecorderID + " has cleared ALARM state and is now OKAY.");
+                log.info("Recorder" + mRecorderID + " has cleared ALARM state and is now OKAY.");
                 Hook.fire(Hook.RECORDER_ALARM_CLEAR, new Recorder(mRecorderID, currentStatus));
             }
         } catch (IOException e) {
-            LOGGER.error("Problem firing Alarm Status Update Hook", e);
+            log.error("Problem firing Alarm Status Update Hook", e);
         }
 
         try {
             Hook.fire(Hook.RECORDER_STATUS_UPDATE, DB.getRecorder("id='" + mRecorderID + "'")[0]);
         } catch (IOException e) {
-            LOGGER.error("Problem firing Recorder Status Update Hook", e);
+            log.error("Problem firing Recorder Status Update Hook", e);
         }
     }
 }
