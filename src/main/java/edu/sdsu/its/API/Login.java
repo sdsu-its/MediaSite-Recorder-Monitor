@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import edu.sdsu.its.API.Models.SimpleMessage;
 import edu.sdsu.its.API.Models.User;
 import edu.sdsu.its.DB;
-import lombok.extern.log4j.Log4j;
+import org.apache.log4j.Logger;
 
 import javax.persistence.PersistenceException;
 import javax.servlet.http.HttpServletRequest;
@@ -23,8 +23,8 @@ import java.util.HashMap;
  * Created on 7/14/17.
  */
 @Path("/")
-@Log4j
 public class Login {
+    private static final Logger LOGGER = Logger.getLogger(Login.class);
 
     @Context
     private HttpServletRequest request;
@@ -59,7 +59,7 @@ public class Login {
             User user = DB.loginUser(email, password);
 
             if (user != null) {
-                log.debug("User \"" + email + "\" has logged-in successfully!");
+                LOGGER.debug("User \"" + email + "\" has logged-in successfully!");
                 request.getSession().removeAttribute("login-status");
                 request.getSession().setAttribute("user", user);
 
@@ -67,12 +67,12 @@ public class Login {
 
                 return Response.seeOther(redirectAfter == null ? new URI("/") : new URI(redirectAfter)).build();
             } else {
-                log.info("User \"" + email + "\" login attempt FAILED");
+                LOGGER.info("User \"" + email + "\" login attempt FAILED");
                 request.getSession().setAttribute("login-status", "failed");
                 return Response.seeOther(new URI("/login")).build();
             }
         } catch (Exception e) {
-            log.warn("Problem Logging In User", e);
+            LOGGER.warn("Problem Logging In User", e);
         }
         request.getSession().setAttribute("login-status", "error");
         return Response.seeOther(new URI("/login")).build();
@@ -130,7 +130,7 @@ public class Login {
 
             return Response.status(Response.Status.OK).entity(new SimpleMessage("OK", "Password Updated").asJson()).build();
         } catch (Exception e) {
-            log.warn("Problem changing user's password", e);
+            LOGGER.warn("Problem changing user's password", e);
         }
 
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new SimpleMessage("Error", "Something went wrong unexpectedly. Check Application logs for details.").asJson()).build();

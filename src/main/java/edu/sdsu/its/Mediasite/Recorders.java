@@ -9,8 +9,8 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import edu.sdsu.its.API.Models.Recorder;
 import edu.sdsu.its.API.Models.Status;
 import edu.sdsu.its.DB;
-import lombok.extern.log4j.Log4j;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,8 +20,9 @@ import java.util.List;
  * @author Tom Paulus
  * Created on 5/5/17.
  */
-@Log4j
 public class Recorders {
+    private static final Logger LOGGER = Logger.getLogger(Recorders.class);
+
     private static final String msPass = DB.getPreference("ms.api-pass");
     private static final String msUser = DB.getPreference("ms.api-user");
     private static final String msAPI = DB.getPreference("ms.api-key");
@@ -44,14 +45,14 @@ public class Recorders {
                         .basicAuth(msUser, msPass)
                         .asJson();
             } catch (UnirestException e) {
-                log.error("Problem retrieving recorder list from MS API", e);
+                LOGGER.error("Problem retrieving recorder list from MS API", e);
                 return null;
             }
 
             if (recorderRequest.getStatus() != 200) {
-                log.error(String.format("Problem retrieving recorder list from MS API. HTTP Status: %d",
+                LOGGER.error(String.format("Problem retrieving recorder list from MS API. HTTP Status: %d",
                         recorderRequest.getStatus()));
-                log.info(recorderRequest.getBody());
+                LOGGER.info(recorderRequest.getBody());
                 return null;
             }
 
@@ -62,7 +63,7 @@ public class Recorders {
             Collections.addAll(recorderList, response.value);
         } while (nextPageURL != null && !nextPageURL.isEmpty());
 
-        log.debug(String.format("Got %d recorders from API", recorderList.size()));
+        LOGGER.debug(String.format("Got %d recorders from API", recorderList.size()));
 
         return recorderList.toArray(new Recorder[]{});
     }
@@ -78,7 +79,7 @@ public class Recorders {
                     .basicAuth(msUser, msPass)
                     .asString();
         } catch (UnirestException e) {
-            log.error("Problem retrieving recorder info from MS API - ID: " + recorderId, e);
+            LOGGER.error("Problem retrieving recorder info from MS API - ID: " + recorderId, e);
             return null;
         }
 
@@ -101,10 +102,10 @@ public class Recorders {
                     .asString();
         } catch (UnirestException e) {
             if (e.getCause() instanceof ConnectTimeoutException) {
-                log.warn(String.format("Could not connect to Recorder at IP %s - Connection Timeout", recorderIP));
+                LOGGER.warn(String.format("Could not connect to Recorder at IP %s - Connection Timeout", recorderIP));
             }
 
-            log.error("Problem retrieving recorder status from Recorder - IP: " + recorderIP, e);
+            LOGGER.error("Problem retrieving recorder status from Recorder - IP: " + recorderIP, e);
             return null;
         }
 

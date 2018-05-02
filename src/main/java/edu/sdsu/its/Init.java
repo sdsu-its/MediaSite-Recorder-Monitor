@@ -4,7 +4,7 @@ import edu.sdsu.its.API.Models.Recorder;
 import edu.sdsu.its.API.Models.User;
 import edu.sdsu.its.Jobs.SyncRecorderDB;
 import edu.sdsu.its.Jobs.SyncRecorderStatus;
-import lombok.extern.log4j.Log4j;
+import org.apache.log4j.Logger;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
@@ -30,8 +30,8 @@ import java.util.Properties;
  * Created on 10/21/2016.
  */
 @WebListener
-@Log4j
 public class Init implements ServletContextListener {
+    private static final Logger LOGGER = Logger.getLogger(Init.class);
     private static final String DEFAULT_FIRST_NAME = "Administrator";
     private static final String DEFAULT_LAST_NAME = "User";
     private static final String DEFAULT_EMAIL = "admin@its.sdsu.edu";
@@ -54,7 +54,7 @@ public class Init implements ServletContextListener {
         try {
             setPreferenceDefaults();
         } catch (IOException e) {
-            log.error("Problem Updating Preferences Table via Defaults", e);
+            LOGGER.error("Problem Updating Preferences Table via Defaults", e);
         }
 
         // Setup Sync Jobs
@@ -76,14 +76,14 @@ public class Init implements ServletContextListener {
                 Schedule.getScheduler().deleteJob(jobKey);
             }
         } catch (SchedulerException e) {
-            log.error("Problem Clearing Job Queue", e);
+            LOGGER.error("Problem Clearing Job Queue", e);
         }
 
         try {
             Schedule.getScheduler().clear();
             Schedule.getScheduler().shutdown(false);
         } catch (SchedulerException e) {
-            log.error("Problem shutting down scheduler", e);
+            LOGGER.error("Problem shutting down scheduler", e);
         }
 
         DB.shutdown();
@@ -96,46 +96,46 @@ public class Init implements ServletContextListener {
             if (driver.getClass().getClassLoader() == cl) {
                 // This driver was registered by the webapp's ClassLoader, so deregister it:
                 try {
-                    log.info(String.format("Deregistering JDBC driver: %s", driver));
+                    LOGGER.info(String.format("Deregistering JDBC driver: %s", driver));
                     DriverManager.deregisterDriver(driver);
                 } catch (SQLException ex) {
-                    log.fatal(String.format("Error deregistering JDBC driver: %s", driver), ex);
+                    LOGGER.fatal(String.format("Error deregistering JDBC driver: %s", driver), ex);
                 }
             } else {
                 // driver was not registered by the webapp's ClassLoader and may be in use elsewhere
-                log.info(String.format("Not deregistering JDBC driver %s as it does not belong to this webapp's ClassLoader", driver));
+                LOGGER.info(String.format("Not deregistering JDBC driver %s as it does not belong to this webapp's ClassLoader", driver));
             }
         }
     }
 
     private void createInitialUser() {
         User[] users = DB.getUser("");
-        log.info(String.format("Starting Webapp. Found %d users in DB", users.length));
+        LOGGER.info(String.format("Starting Webapp. Found %d users in DB", users.length));
         if (users.length == 0) {
-            log.info("No users were found in the DB. Creating default User.");
+            LOGGER.info("No users were found in the DB. Creating default User.");
             User user = new User(DEFAULT_FIRST_NAME, DEFAULT_LAST_NAME, DEFAULT_EMAIL, true);
             user.setPassword(DEFAULT_PASSWORD);
             DB.updateUser(user);
 
-            log.info(String.format("Initial Staff Created.\n " +
+            LOGGER.info(String.format("Initial Staff Created.\n " +
                     "Username: \"%s\"\n" +
                     "Password: \"%s\"", DEFAULT_EMAIL, DEFAULT_PASSWORD));
         }
     }
 
     private void setPreferenceDefaults() throws IOException {
-        log.info("Updating Preferences Table with Default Values if necessary");
+        LOGGER.info("Updating Preferences Table with Default Values if necessary");
 
         Properties properties = new Properties();
         properties.load(this.getClass().getClassLoader().getResourceAsStream("defaults.properties"));
 
         for (Map.Entry<Object, Object> preference : properties.entrySet()) {
             if (DB.getPreference(String.valueOf(preference.getKey())) == null) {
-                log.info("No value in DB for " + String.valueOf(preference.getKey()) + "; Setting to Default Value of " + String.valueOf(preference.getValue()));
+                LOGGER.info("No value in DB for " + String.valueOf(preference.getKey()) + "; Setting to Default Value of " + String.valueOf(preference.getValue()));
                 DB.setPreference(String.valueOf(preference.getKey()),
                         String.valueOf(preference.getValue()));
             } else {
-                log.debug("Value " + String.valueOf(preference.getKey()) + " is already set in DB. Skipping!");
+                LOGGER.debug("Value " + String.valueOf(preference.getKey()) + " is already set in DB. Skipping!");
             }
         }
     }
@@ -147,31 +147,31 @@ public class Init implements ServletContextListener {
             scheduler.clear();
             scheduler.startDelayed(60);
         } catch (SchedulerException e) {
-            log.error("Problem Starting Scheduler", e);
+            LOGGER.error("Problem Starting Scheduler", e);
         }
         String envDisable = System.getenv("MS_SYNC_DISABLE");
 
         try {
             if (!(envDisable != null && envDisable.toUpperCase().equals("TRUE"))) {
-                log.info("Scheduling Recorder DB Sync");
+                LOGGER.info("Scheduling Recorder DB Sync");
                 if (!Boolean.parseBoolean(DB.getPreference("sync_db.enable"))) {
-                    log.info("Pausing Sync Recorder DB Trigger Group");
-                    log.debug("Trigger Group: " + SyncRecorderDB.JOB_GROUP);
+                    LOGGER.info("Pausing Sync Recorder DB Trigger Group");
+                    LOGGER.debug("Trigger Group: " + SyncRecorderDB.JOB_GROUP);
                     scheduler.pauseTriggers(GroupMatcher.groupEquals(SyncRecorderDB.JOB_GROUP));
                 }
 
                 final String syncDBFreq = DB.getPreference("sync_db.frequency");
                 if (syncDBFreq != null) {
                     SyncRecorderDB.schedule(scheduler, Integer.parseInt(syncDBFreq));
-                    log.debug("DB Sync Frequency: " + syncDBFreq);
+                    LOGGER.debug("DB Sync Frequency: " + syncDBFreq);
                 } else {
-                    log.warn("DB Sync Frequency has not been set - aborting");
+                    LOGGER.warn("DB Sync Frequency has not been set - aborting");
                     throw new SchedulerException("Trigger Frequency not set");
                 }
             } else
-                log.warn("DB Sync has been DISABLED via Environment Variable (MS_SYNC_DISABLE)");
+                LOGGER.warn("DB Sync has been DISABLED via Environment Variable (MS_SYNC_DISABLE)");
         } catch (SchedulerException e) {
-            log.error("Problem Scheduling DB Sync Job", e);
+            LOGGER.error("Problem Scheduling DB Sync Job", e);
         }
 
         try {
@@ -180,26 +180,26 @@ public class Init implements ServletContextListener {
                 final int syncRate;
                 if (statusSyncFreq != null) {
                     syncRate = Integer.parseInt(statusSyncFreq);
-                    log.debug("Status Sync Frequency: " + statusSyncFreq);
+                    LOGGER.debug("Status Sync Frequency: " + statusSyncFreq);
                 } else {
-                    log.warn("Status Sync Frequency has not been set - aborting");
+                    LOGGER.warn("Status Sync Frequency has not been set - aborting");
                     throw new SchedulerException("Trigger Frequency not set");
                 }
 
                 if (!Boolean.parseBoolean(DB.getPreference("sync_recorder.enable"))) {
-                    log.info("Pausing Sync Recorder Status Trigger Group");
-                    log.debug("Trigger Group: " + SyncRecorderStatus.JOB_GROUP);
+                    LOGGER.info("Pausing Sync Recorder Status Trigger Group");
+                    LOGGER.debug("Trigger Group: " + SyncRecorderStatus.JOB_GROUP);
                     scheduler.pauseTriggers(GroupMatcher.groupEquals(SyncRecorderStatus.JOB_GROUP));
                 }
 
                 for (Recorder recorder : DB.getRecorder("")) {
-                    log.info(String.format("Scheduling Sync for Recorder with ID %s ", recorder.getId()));
+                    LOGGER.info(String.format("Scheduling Sync for Recorder with ID %s ", recorder.getId()));
                     new SyncRecorderStatus(recorder.getId()).schedule(scheduler, syncRate);
                 }
             } else
-                log.warn("Recorder Sync has been DISABLED via Environment Variable (MS_SYNC_DISABLE)");
+                LOGGER.warn("Recorder Sync has been DISABLED via Environment Variable (MS_SYNC_DISABLE)");
         } catch (SchedulerException e) {
-            log.error("Problem Scheduling Recorder Sync Job(s)", e);
+            LOGGER.error("Problem Scheduling Recorder Sync Job(s)", e);
         }
     }
 }

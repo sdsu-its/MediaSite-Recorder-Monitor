@@ -1,6 +1,6 @@
 package edu.sdsu.its;
 
-import lombok.extern.log4j.Log4j;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,10 +8,10 @@ import java.util.Properties;
 
 /**
  * @author Tom Paulus
- * Created on 7/5/17.
+ *         Created on 7/5/17.
  */
-@Log4j
 public class Meta {
+    private static final Logger LOGGER = Logger.getLogger(Meta.class);
     public static final MetaInfo buildInfo = Meta.loadBuildInfo();
 
     public static MetaInfo loadBuildInfo() {
@@ -21,7 +21,7 @@ public class Meta {
             properties = new Properties();
             properties.load(inputStream);
         } catch (IOException e) {
-            log.error("Problem Reading BuildInfo properties file", e);
+            LOGGER.error("Problem Reading BuildInfo properties file", e);
             return null;
         }
         return new MetaInfo(

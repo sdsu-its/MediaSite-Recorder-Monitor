@@ -42,10 +42,6 @@ public class ManageIntegration extends HttpServlet {
         request.setAttribute("email_from_name", DB.getPreference("email.from_name"));
         request.setAttribute("email_from_email", DB.getPreference("email.from_email"));
 
-        // Slack Settings
-        request.setAttribute("slack_enable", DB.getPreference("slack.enable"));
-        request.setAttribute("slack_webhook_url", DB.getPreference("slack.webhook_url"));
-
         renderer.dispatcherFor(TEMPLATE_PATH)
                 .render(request, response);
     }
