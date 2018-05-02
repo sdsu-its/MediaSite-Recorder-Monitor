@@ -95,6 +95,8 @@ public class SyncRecorderStatus implements Job {
                 log.info("Finished Updating Recorder Status for Recorder with ID: " + this.mRecorderID);
                 return;
             }
+        } else {
+            recorder.setRetryCount(0);
         }
 
         log.debug(String.format("Recorder Status is \"%s\"", currentStatus));
