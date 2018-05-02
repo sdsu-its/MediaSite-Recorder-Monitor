@@ -80,8 +80,21 @@ public class SyncRecorderStatus implements Job {
         }
 
         if (currentStatus == null) {
-            LOGGER.error("Problem retrieving recorder status from API/Recorder");
-            currentStatus = Status.UNKNOWN;
+            log.warn("Problem retrieving recorder status from API/Recorder");
+            int retry_max = Integer.parseInt(DB.getPreference("sync_recorder.retry_count"));
+            if (recorder.getRetryCount() >= retry_max) {
+                log.warn("Retry count exceed for recorder - " + recorder.getName());
+                currentStatus = Status.UNKNOWN;
+            } else {
+                // Retry Count not met yet, we can try again
+                log.warn(String.format("Will retry %d more times", recorder.getRetryCount() - retry_max));
+                log.info("Hook Fire suppressed!");
+                recorder.setRetryCount(recorder.getRetryCount() + 1);
+                DB.updateRecorder(recorder);
+
+                log.info("Finished Updating Recorder Status for Recorder with ID: " + this.mRecorderID);
+                return;
+            }
         }
 
         log.debug(String.format("Recorder Status is \"%s\"", currentStatus));

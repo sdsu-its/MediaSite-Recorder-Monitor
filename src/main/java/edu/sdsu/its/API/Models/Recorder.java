@@ -64,6 +64,9 @@ public class Recorder {
     @Column(name = "last_seen")
     private Timestamp lastSeen;
 
+    @Column(name = "retry_count")
+    private Integer retryCount;
+
     public Recorder(String id) {
         Id = id;
     }
@@ -126,6 +129,10 @@ public class Recorder {
         }
         if (newRecorder.getStatus() != null) {
             existing.status = newRecorder.getStatus();
+        }
+
+        if (newRecorder.getRetryCount() != null) {
+            existing.retryCount = newRecorder.getRetryCount();
         }
 
         return existing;
