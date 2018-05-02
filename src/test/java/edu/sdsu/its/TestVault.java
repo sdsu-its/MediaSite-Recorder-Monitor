@@ -1,6 +1,6 @@
 package edu.sdsu.its;
 
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
@@ -10,10 +10,10 @@ import static org.junit.Assert.assertTrue;
  * The Vault must be unsealed for these tests to pass.
  *
  * @author Tom Paulus
- *         Created on 11/3/16.
+ * Created on 11/3/16.
  */
+@Log4j
 public class TestVault {
-    private final static Logger LOGGER = Logger.getLogger(TestVault.class);
 
     /**
      * Check that the environment variables that are used by the Key Server are set.
@@ -25,10 +25,10 @@ public class TestVault {
         final String SECRET_ID = System.getenv("VAULT_SECRET");
         final String APP_NAME = System.getenv("MS_APP");
 
-        LOGGER.debug("ENV.VAULT_ADDR =" + VAULT_ADDR);
-        LOGGER.debug("ENV.ROLE_ID =" + ROLE_ID);
-        LOGGER.debug("ENV.SECRET_ID =" + SECRET_ID);
-        LOGGER.debug("ENV.MS_APP =" + APP_NAME);
+        log.debug("ENV.VAULT_ADDR =" + VAULT_ADDR);
+        log.debug("ENV.ROLE_ID =" + ROLE_ID);
+        log.debug("ENV.SECRET_ID =" + SECRET_ID);
+        log.debug("ENV.MS_APP =" + APP_NAME);
 
         assertTrue("Empty Vault Address", VAULT_ADDR != null && VAULT_ADDR.length() > 0);
         assertTrue("Empty Vault Role ID", ROLE_ID != null && ROLE_ID.length() > 0);
