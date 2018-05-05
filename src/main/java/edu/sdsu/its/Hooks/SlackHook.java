@@ -1,7 +1,6 @@
 package edu.sdsu.its.Hooks;
 
 import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import edu.sdsu.its.API.Models.Recorder;
@@ -11,7 +10,6 @@ import edu.sdsu.its.Notify;
 import lombok.extern.log4j.Log4j;
 
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.HashMap;
 
 /**
@@ -23,6 +21,32 @@ import java.util.HashMap;
 public class SlackHook extends EventHook {
     private static final String ALERT_TEMPLATE_PATH = "slack_templates/recorder_in_alarm.twig";
     private static final String CLEARED_TEMPLATE_PATH = "slack_templates/recorder_alarm_cleared.twig";
+
+    static HttpResponse<String> postSlackWebhook(final String templatePath, Recorder recorder) {
+        HttpResponse<String> response = null;
+
+        try {
+            response = Unirest.post(DB.getPreference("slack.webhook_url"))
+                    .body(Notify.messageFromTemplate(templatePath, new HashMap<String, Object>() {{
+                        if (recorder != null) {
+                            Recorder recorderRecord = DB.getRecorder("id='" + recorder.getId() + "'")[0];
+                            put("recorder", recorderRecord);
+                            put("generated_ts", recorderRecord.getLastSeen().getTime() / 1000);  // Divide by 1000 to get seconds, rather than millis
+                        } else {
+                            put("generated_ts", System.currentTimeMillis() / 1000);  // Divide by 1000 to get seconds, rather than millis
+                        }
+                    }}))
+                    .asString();
+
+            log.debug("Response from Slack - " + response.getBody());
+        } catch (UnirestException e) {
+            log.error("Could not post Webhook to Slack", e);
+        } catch (IOException e) {
+            log.warn("Could not make JSON message to post to Slack", e);
+        }
+
+        return response;
+    }
 
     @Override Object onUserCreate(User user) {
         return null;
@@ -60,24 +84,5 @@ public class SlackHook extends EventHook {
         postSlackWebhook(CLEARED_TEMPLATE_PATH, recorder);
 
         return null;
-    }
-
-    private HttpResponse<JsonNode> postSlackWebhook(final String templatePath, Recorder recorder) {
-        HttpResponse<JsonNode> response = null;
-
-        try {
-            response = Unirest.post(DB.getPreference("slack.webhook_url"))
-                    .body(Notify.messageFromTemplate(templatePath, new HashMap<String, Object>() {{
-                        put("recorder", DB.getRecorder("id='" + recorder.getId() + "'")[0]);
-                        put("generated_ts", new Timestamp(new java.util.Date().getTime()).toString());
-                    }}))
-                    .asJson();
-        } catch (UnirestException e) {
-            log.error("Could not post Webhook to Slack", e);
-        } catch (IOException e) {
-            log.warn("Could not make JSON message to post to Slack", e);
-        }
-
-        return response;
     }
 }
